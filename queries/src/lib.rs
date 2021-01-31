@@ -13,12 +13,13 @@ mod pr_query {
         pub repo_name: String,
         pub repo_owner: String,
         pub pr_cursor: Option<String>,
+        pub page_size: i32,
     }
 
     /// ```graphql
     /// query PRs($repoName: String!, $repoOwner: String!, $prCursor: String) {
     ///   repository(name: $repoName, owner: $repoOwner) {
-    ///     pullRequests(first: 10, states: MERGED, after: $prCursor) {
+    ///     pullRequests(first: 100, states: MERGED, after: $prCursor) {
     ///       pageInfo {
     ///         endCursor
     ///         hasNextPage
@@ -58,7 +59,7 @@ mod pr_query {
     #[derive(cynic::QueryFragment, Debug)]
     #[cynic(graphql_type = "Repository", argument_struct = "PRsArguments")]
     pub struct Repository {
-        #[arguments(first = 10, states = Some(vec![PullRequestState::Merged]), after = &args.pr_cursor)]
+        #[arguments(first = args.page_size, states = Some(vec![PullRequestState::Merged]), after = &args.pr_cursor)]
         pub pull_requests: PullRequestConnection,
     }
 
@@ -66,6 +67,7 @@ mod pr_query {
     #[cynic(graphql_type = "PullRequestConnection")]
     pub struct PullRequestConnection {
         pub page_info: PageInfo,
+        pub total_count: i32,
         #[cynic(flatten)]
         pub nodes: Vec<PullRequest>,
     }

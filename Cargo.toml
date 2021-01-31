@@ -11,6 +11,7 @@ anyhow = "1.0.38"
 #cynic = { version = "0.11", features = ["reqwest-blocking", "chrono"] }
 cynic = { path = "/Users/graeme/src/cynic/cynic", features = ["reqwest-blocking", "chrono"] }
 chrono = "0.4.19"
+indicatif = "0.15"
 reqwest = { version = "0.11.0", features = ["blocking"] }
 structopt = "0.3.21"
 

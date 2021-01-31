@@ -1,6 +1,7 @@
 use std::env;
 
 use anyhow::anyhow;
+use indicatif::{HumanDuration, ProgressBar, ProgressIterator, ProgressStyle};
 use structopt::StructOpt;
 
 mod pull_requests;
@@ -23,18 +24,34 @@ fn main() {
 
     let opts = Opts::from_args();
 
+    let team_fetch = ProgressBar::new_spinner();
+    team_fetch.set_style(ProgressStyle::default_spinner());
+    team_fetch.set_message("Fetching team members");
+
     let team_members = team_members(&opts.org, &opts.team, &token).unwrap();
 
-    let pull_requests = pull_requests::for_repo(&opts.org, &opts.repo, token).filter(|pr| {
-        if let Some(login) = pr.author.as_ref().and_then(|a| a.login()) {
-            team_members.iter().any(|member| member == login)
-        } else {
-            false
-        }
-    });
+    team_fetch.finish_with_message(&format!("Fetched {} team members", team_members.len()));
+
+    let pr_pages = pull_requests::pages_for_repo(&opts.org, &opts.repo, token);
+    let pr_progress = ProgressBar::new(pr_pages.total_count as u64);
+    pr_progress.set_style(
+        ProgressStyle::default_bar().template(
+            "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
+        ),
+    );
+
+    let pull_requests = pr_pages
+        .flatten()
+        .progress_with(pr_progress.clone())
+        .filter(|pr| {
+            if let Some(login) = pr.author.as_ref().and_then(|a| a.login()) {
+                team_members.iter().any(|member| member == login)
+            } else {
+                false
+            }
+        });
 
     let lead_times = pull_requests
-        .into_iter()
         .flat_map(|pr| {
             let check_suites = pr.merge_commit?.check_suites?.nodes;
             if check_suites
@@ -59,13 +76,19 @@ fn main() {
             )
         })
         .flatten()
-        .map(|(commit_time, deploy_time)| (deploy_time - commit_time).num_minutes())
+        .map(|(commit_time, deploy_time)| (deploy_time - commit_time).num_seconds() as u64)
         .collect::<Vec<_>>();
 
-    let num = lead_times.len() as i64;
-    let total = lead_times.into_iter().sum::<i64>();
+    pr_progress.finish_with_message(&format!("Fetched {} commits", lead_times.len()));
 
-    println!("Mean Lead Time: {} minutes", total / num);
+    let num = lead_times.len() as u64;
+    let total = lead_times.into_iter().sum::<u64>();
+    let mean_seconds = total / num;
+
+    println!(
+        "Average Lead Time: {} ",
+        HumanDuration(std::time::Duration::from_secs(mean_seconds))
+    );
 }
 
 fn team_members(
