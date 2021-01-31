@@ -7,3 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+#cynic = { version = "0.11", features = ["reqwest-blocking", "chrono"] }
+cynic = { path = "/Users/graeme/src/cynic/cynic", features = ["reqwest-blocking", "chrono"] }
+reqwest = { version = "0.11.0", features = ["blocking"] }
+
+queries = { path = "queries" }
