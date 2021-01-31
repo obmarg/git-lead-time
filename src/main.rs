@@ -1,6 +1,7 @@
 use std::env;
 
 use anyhow::anyhow;
+use console::style;
 use indicatif::{HumanDuration, ProgressBar, ProgressIterator, ProgressStyle};
 use structopt::StructOpt;
 
@@ -25,20 +26,41 @@ fn main() {
     let opts = Opts::from_args();
 
     let team_fetch = ProgressBar::new_spinner();
-    team_fetch.set_style(ProgressStyle::default_spinner());
-    team_fetch.set_message("Fetching team members");
+    team_fetch.set_message(&format!(
+        "{} Fetching team members",
+        style("[1/3]").bold().dim()
+    ));
 
     let team_members = team_members(&opts.org, &opts.team, &token).unwrap();
 
-    team_fetch.finish_with_message(&format!("Fetched {} team members", team_members.len()));
+    team_fetch.finish_with_message(&format!(
+        "{} Fetched {} team members",
+        style("[1/3]").bold().dim(),
+        team_members.len()
+    ));
 
+    let pr_count = ProgressBar::new_spinner();
+    pr_count.set_message(&format!(
+        "{} Counting Pull Requests",
+        style("[2/3]").bold().dim()
+    ));
     let pr_pages = pull_requests::pages_for_repo(&opts.org, &opts.repo, token);
+    pr_count.finish_with_message(&format!(
+        "{} Counted {} Pull Requests",
+        style("[2/3]").bold().dim(),
+        pr_pages.total_count
+    ));
+
     let pr_progress = ProgressBar::new(pr_pages.total_count as u64);
     pr_progress.set_style(
         ProgressStyle::default_bar().template(
             "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
         ),
     );
+    pr_progress.println(&format!(
+        "  {} Fetching Pull Requests",
+        style("[3/3]").bold().dim()
+    ));
 
     let pull_requests = pr_pages
         .flatten()

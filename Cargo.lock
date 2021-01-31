@@ -195,6 +195,7 @@ checksum = "ea221b5284a47e40033bf9b66f35f984ec0ea2931eb03505246cd27a963f981b"
 [[package]]
 name = "cynic"
 version = "0.12.0-dev"
+source = "git+https://github.com/obmarg/cynic.git#5ac36f6d2d874b58023855d1b97e585729a4492c"
 dependencies = [
  "chrono",
  "cynic-proc-macros",
@@ -208,6 +209,7 @@ dependencies = [
 [[package]]
 name = "cynic-codegen"
 version = "0.12.0-dev"
+source = "git+https://github.com/obmarg/cynic.git#5ac36f6d2d874b58023855d1b97e585729a4492c"
 dependencies = [
  "Inflector",
  "darling",
@@ -221,6 +223,7 @@ dependencies = [
 [[package]]
 name = "cynic-proc-macros"
 version = "0.12.0-dev"
+source = "git+https://github.com/obmarg/cynic.git#5ac36f6d2d874b58023855d1b97e585729a4492c"
 dependencies = [
  "cynic-codegen",
  "syn",
@@ -381,6 +384,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "console",
  "cynic",
  "indicatif",
  "queries",
