@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 #cynic = { version = "0.11", features = ["chrono"] }
 cynic = { path = "/Users/graeme/src/cynic/cynic", features = ["chrono"] }
+chrono = "0.4.19"
