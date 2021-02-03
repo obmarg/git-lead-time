@@ -74,32 +74,55 @@ fn main() {
             }
         });
 
-    let lead_times = pull_requests
-        .flat_map(|pr| {
-            let deploy_time = pr.deploy_time()?;
+    let lead_times = {
+        let mut lead_times = pull_requests
+            .flat_map(|pr| {
+                let deploy_time = pr.deploy_time()?;
 
-            Some(
-                pr.commits
-                    .nodes
-                    .into_iter()
-                    .map(move |commit| (commit.commit.authored_date.0, deploy_time)),
-            )
-        })
-        .flatten()
-        .map(|(commit_time, deploy_time)| (deploy_time - commit_time).num_seconds() as u64)
-        .collect::<Vec<_>>();
+                Some(
+                    pr.commits
+                        .nodes
+                        .into_iter()
+                        .map(move |commit| (commit.commit.authored_date.0, deploy_time)),
+                )
+            })
+            .flatten()
+            .map(|(commit_time, deploy_time)| (deploy_time - commit_time).num_seconds() as u64)
+            .collect::<Vec<_>>();
+
+        lead_times.sort_unstable();
+        lead_times
+    };
 
     pr_progress.finish_with_message(&format!("Fetched {} commits", lead_times.len()));
+
+    if lead_times.is_empty() {
+        println!("No commits found.  Giving up.");
+        return;
+    }
+
+    let median_secs = lead_times[lead_times.len() / 2];
+    let max_secs = *lead_times.last().unwrap();
 
     let num = lead_times.len() as u64;
     let total = lead_times.into_iter().sum::<u64>();
     let mean_seconds = total / num;
 
+    println!("Total Commits: {}", num);
     println!(
-        "Average Lead Time: {} ({} secs) across {} commits",
+        "Average Lead Time: {} ({} secs)",
         HumanDuration(std::time::Duration::from_secs(mean_seconds)),
         mean_seconds,
-        num
+    );
+    println!(
+        "Median Lead Time: {} ({} secs)",
+        HumanDuration(std::time::Duration::from_secs(median_secs)),
+        median_secs,
+    );
+    println!(
+        "Max Lead Time: {} ({} secs)",
+        HumanDuration(std::time::Duration::from_secs(max_secs)),
+        max_secs,
     );
 }
 
