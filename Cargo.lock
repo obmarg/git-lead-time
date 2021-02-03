@@ -265,6 +265,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "easy-ext"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80581ee1c96b68c603eee514af47f075b39829304bde1a04381c826f3e06a9b4"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -386,6 +396,7 @@ dependencies = [
  "chrono",
  "console",
  "cynic",
+ "easy-ext",
  "indicatif",
  "queries",
  "reqwest",

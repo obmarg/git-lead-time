@@ -11,6 +11,7 @@ anyhow = "1.0.38"
 console = "0.14.0"
 cynic = { git = "https://github.com/obmarg/cynic.git", features = ["reqwest-blocking", "chrono"] }
 chrono = "0.4.19"
+easy-ext = "0.2.6"
 indicatif = "0.15"
 reqwest = { version = "0.11.0", features = ["blocking"] }
 structopt = "0.3.21"

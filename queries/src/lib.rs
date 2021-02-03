@@ -43,6 +43,13 @@ mod pr_query {
     ///               updatedAt
     ///             }
     ///           }
+    ///           status {
+    ///             state
+    ///             contexts {
+    ///               state
+    ///               createdAt
+    ///             }
+    ///           }
     ///         }
     ///       }
     ///     }
@@ -77,7 +84,7 @@ mod pr_query {
     pub struct PullRequest {
         #[arguments(first = 250)]
         pub commits: PullRequestCommitConnection,
-        pub merge_commit: Option<Commit>,
+        pub merge_commit: Option<MergeCommit>,
         pub author: Option<Actor>,
     }
 
@@ -109,7 +116,7 @@ mod pr_query {
     #[derive(cynic::QueryFragment, Debug)]
     #[cynic(graphql_type = "PullRequestCommit")]
     pub struct PullRequestCommit {
-        pub commit: Commit2,
+        pub commit: Commit,
     }
 
     #[derive(cynic::QueryFragment, Debug)]
@@ -121,16 +128,17 @@ mod pr_query {
 
     #[derive(cynic::QueryFragment, Debug)]
     #[cynic(graphql_type = "Commit")]
-    pub struct Commit {
+    pub struct MergeCommit {
         pub message_headline: String,
         pub authored_date: DateTime,
         #[arguments(first = 25)]
         pub check_suites: Option<CheckSuiteConnection>,
+        pub status: Option<Status>,
     }
 
     #[derive(cynic::QueryFragment, Debug)]
     #[cynic(graphql_type = "Commit")]
-    pub struct Commit2 {
+    pub struct Commit {
         pub message_headline: String,
         pub authored_date: DateTime,
     }
@@ -170,6 +178,29 @@ mod pr_query {
         InProgress,
         Queued,
         Requested,
+    }
+
+    #[derive(cynic::QueryFragment, Debug)]
+    #[cynic(graphql_type = "Status")]
+    pub struct Status {
+        pub state: StatusState,
+        pub contexts: Vec<StatusContext>,
+    }
+
+    #[derive(cynic::Enum, Clone, Copy, Debug, PartialEq)]
+    #[cynic(graphql_type = "StatusState")]
+    pub enum StatusState {
+        Error,
+        Expected,
+        Failure,
+        Pending,
+        Success,
+    }
+
+    #[derive(cynic::QueryFragment, Debug)]
+    #[cynic(graphql_type = "StatusContext")]
+    pub struct StatusContext {
+        pub created_at: DateTime,
     }
 
     #[derive(cynic::Enum, Clone, Copy, Debug, PartialEq)]

@@ -1,6 +1,7 @@
 use std::env;
 
 use anyhow::anyhow;
+use chrono::{DateTime, Utc};
 use console::style;
 use indicatif::{HumanDuration, ProgressBar, ProgressIterator, ProgressStyle};
 use structopt::StructOpt;
@@ -75,20 +76,7 @@ fn main() {
 
     let lead_times = pull_requests
         .flat_map(|pr| {
-            let check_suites = pr.merge_commit?.check_suites?.nodes;
-            if check_suites
-                .iter()
-                .any(|suite| suite.status != queries::CheckStatusState::Completed)
-            {
-                // Tests either failed or not yet passed, skip this PR
-                return None;
-            }
-
-            let deploy_time = check_suites
-                .into_iter()
-                .max_by_key(|suite| suite.updated_at.0)?
-                .updated_at
-                .0;
+            let deploy_time = pr.deploy_time()?;
 
             Some(
                 pr.commits
@@ -108,8 +96,10 @@ fn main() {
     let mean_seconds = total / num;
 
     println!(
-        "Average Lead Time: {} ",
-        HumanDuration(std::time::Duration::from_secs(mean_seconds))
+        "Average Lead Time: {} ({} secs) across {} commits",
+        HumanDuration(std::time::Duration::from_secs(mean_seconds)),
+        mean_seconds,
+        num
     );
 }
 
@@ -145,4 +135,48 @@ fn team_members(
                 .collect()
         })
         .ok_or_else(|| anyhow!("couldn't find team members"))?)
+}
+
+#[easy_ext::ext]
+impl queries::PullRequest {
+    fn deploy_time(&self) -> Option<DateTime<Utc>> {
+        self.status_finish_time()
+            .or_else(|| self.check_suite_finish_time())
+    }
+
+    fn check_suite_finish_time(&self) -> Option<DateTime<Utc>> {
+        let check_suites = &self.merge_commit.as_ref()?.check_suites.as_ref()?.nodes;
+        if check_suites
+            .iter()
+            .any(|suite| suite.status != queries::CheckStatusState::Completed)
+        {
+            // Tests either failed or not yet passed, skip this PR
+            return None;
+        }
+
+        Some(
+            check_suites
+                .iter()
+                .max_by_key(|suite| suite.updated_at.0)?
+                .updated_at
+                .0,
+        )
+    }
+
+    fn status_finish_time(&self) -> Option<DateTime<Utc>> {
+        let status = self.merge_commit.as_ref()?.status.as_ref()?;
+        if status.state != queries::StatusState::Success {
+            // Tests either failed or not yet passed, skip this PR
+            return None;
+        }
+
+        Some(
+            status
+                .contexts
+                .iter()
+                .max_by_key(|context| context.created_at.0)?
+                .created_at
+                .0,
+        )
+    }
 }

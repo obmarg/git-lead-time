@@ -34,7 +34,7 @@ impl PullRequestPages {
                 repo_name: repo_name.into(),
                 repo_owner: repo_owner.into(),
                 pr_cursor: None,
-                page_size: 100,
+                page_size: 50,
             }),
             token: token.into(),
             total_count,
@@ -101,10 +101,18 @@ fn run_query(
 ) -> cynic::GraphQLResponse<queries::PRs> {
     use cynic::http::ReqwestBlockingExt;
 
-    client
+    let response = client
         .post("https://api.github.com/graphql")
         .bearer_auth(&token)
         .header("User-Agent", "obmarg/git-lead-time")
         .run_graphql(query)
-        .unwrap()
+        .unwrap();
+
+    if let Some(errors) = &response.errors {
+        if !errors.is_empty() {
+            panic!("Errors: {:?}", errors);
+        }
+    }
+
+    response
 }
