@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 cynic = { git = "https://github.com/obmarg/cynic.git", features = ["chrono"] }
-chrono = "0.4.19"
+chrono = { version = "0.4.19", features = ["serde"] }
