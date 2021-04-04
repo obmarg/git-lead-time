@@ -98,7 +98,7 @@ fn run_query(
     client: &reqwest::blocking::Client,
     token: &str,
     query: cynic::Operation<queries::PRs>,
-) -> cynic::GraphQLResponse<queries::PRs> {
+) -> cynic::GraphQlResponse<queries::PRs> {
     use cynic::http::ReqwestBlockingExt;
 
     let response = client

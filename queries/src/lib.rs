@@ -1,12 +1,9 @@
 pub use pr_query::*;
 pub use team_query::*;
 
-#[cynic::query_module(
-    schema_path = r#"src/github.schema.graphql"#,
-    query_module = "query_dsl"
-)]
+#[cynic::schema_for_derives(file = r#"src/github.schema.graphql"#)]
 mod pr_query {
-    use super::{query_dsl, types::*, User};
+    use super::{schema, User};
 
     #[derive(cynic::FragmentArguments, Debug)]
     pub struct PRsArguments {
@@ -210,14 +207,14 @@ mod pr_query {
         Merged,
         Open,
     }
+
+    #[derive(cynic::Scalar, Debug, Clone)]
+    pub struct DateTime(pub chrono::DateTime<chrono::Utc>);
 }
 
-#[cynic::query_module(
-    schema_path = r#"src/github.schema.graphql"#,
-    query_module = "query_dsl"
-)]
+#[cynic::schema_for_derives(file = r#"src/github.schema.graphql"#)]
 mod team_query {
-    use super::{query_dsl, User};
+    use super::{schema, User};
 
     #[derive(cynic::FragmentArguments, Debug)]
     pub struct TeamMembersArguments {
@@ -257,49 +254,12 @@ mod team_query {
     }
 }
 
-mod types {
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct Date(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct DateTime(pub chrono::DateTime<chrono::Utc>);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct GitObjectID(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct GitRefname(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct GitSSHRemote(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct GitTimestamp(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct Html(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct PreciseDateTime(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct Uri(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct X509Certificate(pub String);
-}
-
 #[derive(cynic::QueryFragment, Debug)]
-#[cynic(
-    graphql_type = "User",
-    query_module = "query_dsl",
-    schema_path = r#"src/github.schema.graphql"#
-)]
+#[cynic(graphql_type = "User", schema_path = r#"src/github.schema.graphql"#)]
 pub struct User {
     pub login: String,
 }
 
-mod query_dsl {
-    use super::types::*;
-    cynic::query_dsl!(r#"src/github.schema.graphql"#);
+mod schema {
+    cynic::use_schema!(r#"src/github.schema.graphql"#);
 }
