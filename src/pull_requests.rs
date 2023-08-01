@@ -85,7 +85,7 @@ fn get_total_count(
     });
 
     // Run a single query to get the # of PRs
-    run_query(&client, &token, query)
+    run_query(client, token, query)
         .data
         .unwrap()
         .repository
@@ -103,7 +103,7 @@ fn run_query(
 
     let response = client
         .post("https://api.github.com/graphql")
-        .bearer_auth(&token)
+        .bearer_auth(token)
         .header("User-Agent", "obmarg/git-lead-time")
         .run_graphql(query)
         .unwrap();

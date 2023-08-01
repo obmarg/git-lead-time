@@ -58,7 +58,7 @@ fn main() {
             "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
         ),
     );
-    pr_progress.println(&format!(
+    pr_progress.println(format!(
         "  {} Fetching Pull Requests",
         style("[3/3]").bold().dim()
     ));
@@ -146,7 +146,7 @@ fn team_members(
         .run_graphql(query)
         .unwrap();
 
-    Ok(response
+    response
         .data
         .and_then(|r| r.organization)
         .and_then(|org| org.team)
@@ -157,7 +157,7 @@ fn team_members(
                 .map(|user| user.login)
                 .collect()
         })
-        .ok_or_else(|| anyhow!("couldn't find team members"))?)
+        .ok_or_else(|| anyhow!("couldn't find team members"))
 }
 
 #[easy_ext::ext]
