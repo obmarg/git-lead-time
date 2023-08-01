@@ -49,7 +49,7 @@ impl Iterator for PullRequestPages {
     fn next(&mut self) -> Option<Self::Item> {
         use cynic::QueryBuilder;
 
-        if let Some(next_args) = &self.next_arguments {
+        if let Some(next_args) = self.next_arguments.take() {
             let query = queries::PRs::build(next_args);
 
             let response = run_query(&self.client, &self.token, query);
@@ -97,8 +97,8 @@ fn get_total_count(
 fn run_query(
     client: &reqwest::blocking::Client,
     token: &str,
-    query: cynic::Operation<queries::PRs>,
-) -> cynic::GraphQLResponse<queries::PRs> {
+    query: cynic::Operation<queries::PRs, queries::PRsArguments>,
+) -> cynic::GraphQlResponse<queries::PRs> {
     use cynic::http::ReqwestBlockingExt;
 
     let response = client

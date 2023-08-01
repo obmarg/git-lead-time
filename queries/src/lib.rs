@@ -1,14 +1,12 @@
 pub use pr_query::*;
 pub use team_query::*;
 
-#[cynic::query_module(
-    schema_path = r#"src/github.schema.graphql"#,
-    query_module = "query_dsl"
-)]
+#[cynic::schema_for_derives(file = r#"src/github.schema.graphql"#, module = "schema")]
 mod pr_query {
-    use super::{query_dsl, types::*, User};
+    use super::{schema, User};
+    use chrono::{DateTime, Utc};
 
-    #[derive(cynic::FragmentArguments, Debug)]
+    #[derive(cynic::QueryVariables, Debug)]
     pub struct PRsArguments {
         pub repo_name: String,
         pub repo_owner: String,
@@ -57,16 +55,16 @@ mod pr_query {
     /// }
     /// ```
     #[derive(cynic::QueryFragment, Debug)]
-    #[cynic(graphql_type = "Query", argument_struct = "PRsArguments")]
+    #[cynic(graphql_type = "Query", variables = "PRsArguments")]
     pub struct PRs {
-        #[arguments(name = args.repo_name.clone(), owner = args.repo_owner.clone())]
+        #[arguments(name: $repo_name, owner: $repo_owner)]
         pub repository: Option<Repository>,
     }
 
     #[derive(cynic::QueryFragment, Debug)]
-    #[cynic(graphql_type = "Repository", argument_struct = "PRsArguments")]
+    #[cynic(graphql_type = "Repository", variables = "PRsArguments")]
     pub struct Repository {
-        #[arguments(first = args.page_size, states = Some(vec![PullRequestState::Merged]), after = &args.pr_cursor)]
+        #[arguments(first: $page_size, states: [MERGED], after: $pr_cursor)]
         pub pull_requests: PullRequestConnection,
     }
 
@@ -130,7 +128,7 @@ mod pr_query {
     #[cynic(graphql_type = "Commit")]
     pub struct MergeCommit {
         pub message_headline: String,
-        pub authored_date: DateTime,
+        pub authored_date: chrono::DateTime<chrono::Utc>,
         #[arguments(first = 25)]
         pub check_suites: Option<CheckSuiteConnection>,
         pub status: Option<Status>,
@@ -140,7 +138,7 @@ mod pr_query {
     #[cynic(graphql_type = "Commit")]
     pub struct Commit {
         pub message_headline: String,
-        pub authored_date: DateTime,
+        pub authored_date: chrono::DateTime<chrono::Utc>,
     }
 
     #[derive(cynic::QueryFragment, Debug)]
@@ -155,7 +153,7 @@ mod pr_query {
     pub struct CheckSuite {
         pub status: CheckStatusState,
         pub conclusion: Option<CheckConclusionState>,
-        pub updated_at: DateTime,
+        pub updated_at: chrono::DateTime<chrono::Utc>,
     }
 
     #[derive(cynic::Enum, Clone, Copy, Debug)]
@@ -200,7 +198,7 @@ mod pr_query {
     #[derive(cynic::QueryFragment, Debug)]
     #[cynic(graphql_type = "StatusContext")]
     pub struct StatusContext {
-        pub created_at: DateTime,
+        pub created_at: DateTime<Utc>,
     }
 
     #[derive(cynic::Enum, Clone, Copy, Debug, PartialEq)]
@@ -212,40 +210,34 @@ mod pr_query {
     }
 }
 
-#[cynic::query_module(
-    schema_path = r#"src/github.schema.graphql"#,
-    query_module = "query_dsl"
-)]
+#[cynic::schema_for_derives(file = r#"src/github.schema.graphql"#, module = "schema")]
 mod team_query {
-    use super::{query_dsl, User};
+    use super::{schema, User};
 
-    #[derive(cynic::FragmentArguments, Debug)]
+    #[derive(cynic::QueryVariables, Debug)]
     pub struct TeamMembersArguments {
         pub org: String,
         pub team: String,
     }
 
     #[derive(cynic::QueryFragment, Debug)]
-    #[cynic(graphql_type = "Query", argument_struct = "TeamMembersArguments")]
+    #[cynic(graphql_type = "Query", variables = "TeamMembersArguments")]
     pub struct TeamMembers {
-        #[arguments(login = args.org.clone())]
+        #[arguments(login: $org)]
         pub organization: Option<Organization>,
     }
 
     #[derive(cynic::QueryFragment, Debug)]
-    #[cynic(
-        graphql_type = "Organization",
-        argument_struct = "TeamMembersArguments"
-    )]
+    #[cynic(graphql_type = "Organization", variables = "TeamMembersArguments")]
     pub struct Organization {
-        #[arguments(slug = args.team.clone())]
+        #[arguments(slug: $team)]
         pub team: Option<Team>,
     }
 
     #[derive(cynic::QueryFragment, Debug)]
     #[cynic(graphql_type = "Team")]
     pub struct Team {
-        #[arguments(first = 100)]
+        #[arguments(first: 100)]
         pub members: TeamMemberConnection,
     }
 
@@ -257,49 +249,14 @@ mod team_query {
     }
 }
 
-mod types {
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct Date(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct DateTime(pub chrono::DateTime<chrono::Utc>);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct GitObjectID(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct GitRefname(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct GitSSHRemote(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct GitTimestamp(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct Html(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct PreciseDateTime(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct Uri(pub String);
-
-    #[derive(cynic::Scalar, Debug, Clone)]
-    pub struct X509Certificate(pub String);
-}
-
 #[derive(cynic::QueryFragment, Debug)]
-#[cynic(
-    graphql_type = "User",
-    query_module = "query_dsl",
-    schema_path = r#"src/github.schema.graphql"#
-)]
+#[cynic(schema_path = r#"src/github.schema.graphql"#)]
 pub struct User {
     pub login: String,
 }
 
-mod query_dsl {
-    use super::types::*;
-    cynic::query_dsl!(r#"src/github.schema.graphql"#);
+mod schema {
+    cynic::use_schema!(r#"src/github.schema.graphql"#);
+
+    cynic::impl_scalar!(chrono::DateTime<chrono::Utc>, DateTime);
 }

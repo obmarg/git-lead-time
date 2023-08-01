@@ -83,7 +83,7 @@ fn main() {
                     pr.commits
                         .nodes
                         .into_iter()
-                        .map(move |commit| (commit.commit.authored_date.0, deploy_time)),
+                        .map(move |commit| (commit.commit.authored_date, deploy_time)),
                 )
             })
             .flatten()
@@ -180,9 +180,8 @@ impl queries::PullRequest {
         Some(
             check_suites
                 .iter()
-                .max_by_key(|suite| suite.updated_at.0)?
-                .updated_at
-                .0,
+                .max_by_key(|suite| suite.updated_at)?
+                .updated_at,
         )
     }
 
@@ -197,9 +196,8 @@ impl queries::PullRequest {
             status
                 .contexts
                 .iter()
-                .max_by_key(|context| context.created_at.0)?
-                .created_at
-                .0,
+                .max_by_key(|context| context.created_at)?
+                .created_at,
         )
     }
 }
